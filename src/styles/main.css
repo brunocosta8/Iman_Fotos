@@ -135,6 +135,8 @@ code {
 .section-head h1,
 .section-head h2 { margin: 0; }
 
+.section-head h1 { font-size: 1.45rem; }
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -212,6 +214,7 @@ code {
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s, transform 0.1s, opacity 0.15s;
   touch-action: manipulation;
 }
