@@ -47,7 +47,7 @@ export default async function publicAlbum(view, slug) {
         h('h1', { class: 'hero__title' }, album.name),
         dates && h('p', { class: 'hero__meta' }, icon('calendar', 16), dates),
         album.location && h('p', { class: 'hero__meta' }, icon('pin', 16), album.location))),
-    h('main', { class: 'container' },
+    h('main', { class: 'container sheet' },
       h('div', { class: 'public__bar' },
         h('p', { class: 'muted' }, [
           photos && plural(photos, 'foto', 'fotos'),

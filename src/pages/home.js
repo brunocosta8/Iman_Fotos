@@ -11,17 +11,17 @@ export default async function home(view) {
   const session = await getSession();
   if (!session) return landing(view);
 
-  const storageSlot = h('div');
+  const storageSlot = h('section', { class: 'group' });
   const list = h('div', { class: 'album-list' }, spinner());
 
   view.append(
     topBar(session),
     h('main', { class: 'container' },
-      storageSlot,
       h('div', { class: 'section-head' },
-        h('h1', {}, 'Os meus álbuns'),
-        h('a', { class: 'btn btn--primary', href: url('album/novo'), 'data-link': true }, icon('plus', 18), 'Novo álbum')),
-      list));
+        h('h1', { class: 'large-title' }, 'Álbuns'),
+        h('a', { class: 'btn btn--tinted btn--small', href: url('album/novo'), 'data-link': true }, icon('plus', 16), 'Novo')),
+      list,
+      storageSlot));
 
   const [albumsRes, bar] = await Promise.all([
     supabase
@@ -35,7 +35,7 @@ export default async function home(view) {
     loadStorageBar(),
   ]);
 
-  if (bar) storageSlot.append(bar);
+  if (bar) storageSlot.append(h('h2', { class: 'group__title' }, 'Armazenamento'), bar);
 
   if (albumsRes.error) {
     list.replaceChildren(h('p', { class: 'error' }, errorMessage(albumsRes.error)));
@@ -58,15 +58,14 @@ function albumCard(a) {
   const role = a.album_members?.[0]?.role;
   const dates = formatDateRange(a.start_date, a.end_date);
   return h('a', { class: 'album-card', href: url(`album/${a.id}`), 'data-link': true },
-    h('div', { class: 'album-card__cover' },
-      cover
-        ? h('img', { src: mediaUrl(cover), alt: '', loading: 'lazy' })
-        : h('span', { class: 'album-card__letter' }, a.name.slice(0, 1).toUpperCase())),
-    h('div', { class: 'album-card__body' },
+    cover
+      ? h('img', { class: 'album-card__img', src: mediaUrl(cover), alt: '', loading: 'lazy' })
+      : h('span', { class: 'album-card__letter' }, a.name.slice(0, 1).toUpperCase()),
+    role === 'owner' && h('span', { class: 'album-card__badge' }, 'Criador'),
+    h('div', { class: 'album-card__overlay' },
       h('h2', { class: 'album-card__title' }, a.name),
-      dates && h('p', { class: 'meta' }, icon('calendar', 14), dates),
-      a.location && h('p', { class: 'meta' }, icon('pin', 14), a.location),
-      role === 'owner' && h('span', { class: 'chip' }, 'Criador')));
+      [dates, a.location].filter(Boolean).length > 0 &&
+        h('p', { class: 'album-card__meta' }, [dates, a.location].filter(Boolean).join(' · '))));
 }
 
 function landing(view) {

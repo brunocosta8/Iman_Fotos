@@ -19,7 +19,7 @@ export default async function manageAlbum(view, albumId) {
   if (!session) return loginRequired(view, 'Inicia sessão para gerir este álbum.');
   const uid = session.user.id;
 
-  view.append(topBar(session, { back: { path: '', label: 'Os meus álbuns' } }), h('div', { class: 'container' }, spinner()));
+  view.append(topBar(session, { back: { path: '', label: 'Álbuns' } }), h('div', { class: 'container' }, spinner()));
 
   const [albumRes, mediaRes, membersRes, invitesRes] = await Promise.all([
     supabase.from('albums')
@@ -42,7 +42,7 @@ export default async function manageAlbum(view, albumId) {
 
   if (!albumRes.data) {
     view.replaceChildren(
-      topBar(session, { back: { path: '', label: 'Os meus álbuns' } }),
+      topBar(session, { back: { path: '', label: 'Álbuns' } }),
       h('main', { class: 'container center narrow' },
         h('h1', {}, 'Álbum não encontrado'),
         h('p', { class: 'muted' }, 'Este álbum não existe ou não és membro dele.')));
@@ -65,10 +65,10 @@ export default async function manageAlbum(view, albumId) {
   const heroSlot = h('div');
   const storageSlot = h('div');
   const queue = h('ul', { class: 'queue' });
-  const mediaSlot = h('section', { class: 'card' });
-  const membersSlot = h('section', { class: 'card' });
-  const invitesSlot = h('section', { class: 'card' });
-  const dangerSlot = h('section', { class: 'card card--danger' });
+  const mediaSlot = h('section', { class: 'group' });
+  const membersSlot = h('section', { class: 'group' });
+  const invitesSlot = h('section', { class: 'group' });
+  const dangerSlot = h('section', { class: 'group' });
 
   const fileInput = h('input', {
     type: 'file',
@@ -83,18 +83,19 @@ export default async function manageAlbum(view, albumId) {
   });
 
   view.replaceChildren(
-    topBar(session, { back: { path: '', label: 'Os meus álbuns' } }),
+    topBar(session, { back: { path: '', label: 'Álbuns' } }),
     h('main', { class: 'container stack' },
       heroSlot,
       nfcCard(),
-      h('section', { class: 'card' },
-        h('h2', { class: 'card__title' }, icon('upload', 18), 'Adicionar fotos e vídeos'),
-        h('p', { class: 'muted small' }, 'As fotos são reduzidas no telemóvel antes do envio. Vídeos até 30 segundos.'),
-        h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: () => fileInput.click() },
-          icon('plus', 18), 'Escolher fotos e vídeos'),
-        fileInput,
-        queue,
-        storageSlot),
+      h('section', { class: 'group' },
+        h('h2', { class: 'group__title' }, 'Adicionar'),
+        h('div', { class: 'card' },
+          h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: () => fileInput.click() },
+            icon('plus', 18), 'Escolher fotos e vídeos'),
+          fileInput,
+          queue,
+          storageSlot),
+        h('p', { class: 'group__footer' }, 'As fotos são reduzidas no telemóvel antes do envio. Vídeos até 30 segundos.')),
       mediaSlot,
       membersSlot,
       invitesSlot,
@@ -155,14 +156,15 @@ export default async function manageAlbum(view, albumId) {
         if (m[0]) await setCover(m[0]);
       });
 
-      heroSlot.replaceChildren(h('section', { class: 'card' },
-        h('h2', { class: 'card__title' }, icon('edit', 18), 'Editar álbum'),
+      heroSlot.replaceChildren(h('section', { class: 'group' },
+        h('h1', { class: 'large-title' }, 'Editar álbum'),
         form.el,
-        h('div', { class: 'cover-tools' },
-          h('p', { class: 'muted small' }, 'Capa: abre uma foto do álbum e toca em «Usar como capa», ou carrega uma nova.'),
-          h('button', { class: 'btn btn--ghost btn--small', type: 'button', onclick: () => coverInput.click() },
-            icon('image', 16), 'Carregar nova capa'),
-          coverInput)));
+        h('h2', { class: 'group__title' }, 'Capa'),
+        h('div', { class: 'card list' },
+          h('button', { class: 'row-btn', type: 'button', onclick: () => coverInput.click() },
+            icon('image', 18), 'Carregar nova foto de capa'),
+          coverInput),
+        h('p', { class: 'group__footer' }, 'Também podes abrir uma foto do álbum e tocar em «Usar como capa».')));
       return;
     }
 
@@ -179,9 +181,9 @@ export default async function manageAlbum(view, albumId) {
           dates && h('p', { class: 'meta' }, icon('calendar', 14), dates),
           album.location && h('p', { class: 'meta' }, icon('pin', 14), album.location),
           h('div', { class: 'button-row' },
-            h('a', { class: 'btn btn--small', href: url(`a/${album.slug}`), 'data-link': true }, icon('eye', 16), 'Ver álbum'),
+            h('a', { class: 'btn btn--tinted btn--small', href: url(`a/${album.slug}`), 'data-link': true }, icon('eye', 16), 'Ver álbum'),
             isOwner && h('button', {
-              class: 'btn btn--small btn--ghost',
+              class: 'btn btn--tinted btn--small',
               type: 'button',
               onclick: () => { editing = true; renderHero(); },
             }, icon('edit', 16), 'Editar')))));
@@ -192,8 +194,9 @@ export default async function manageAlbum(view, albumId) {
     const link = () => absoluteUrl(`a/${album.slug}`);
     const code = h('code', { class: 'nfc__url' }, link());
     nfcCard.update = () => { code.textContent = link(); };
-    return h('section', { class: 'card nfc' },
-      h('h2', { class: 'card__title' }, icon('nfc', 18), 'Link para a tag NFC'),
+    return h('section', { class: 'group' },
+      h('h2', { class: 'group__title' }, 'Link para a tag NFC'),
+      h('div', { class: 'card nfc' },
       code,
       h('button', {
         class: 'btn btn--primary btn--block',
@@ -206,7 +209,7 @@ export default async function manageAlbum(view, albumId) {
           h('li', {}, 'Instala uma app de NFC, por exemplo a «NFC Tools» (Android e iPhone).'),
           h('li', {}, 'Escolhe Escrever → Adicionar registo → URL/URI e cola o link.'),
           h('li', {}, 'Toca em Escrever e encosta o telemóvel à tag (NTAG213) atrás do íman.'),
-          h('li', {}, 'Podes gravar o mesmo link em vários ímanes. Não bloqueies a tag, para a poderes regravar.'))));
+          h('li', {}, 'Podes gravar o mesmo link em vários ímanes. Não bloqueies a tag, para a poderes regravar.')))));
   }
 
   // ================================================================ média
@@ -217,17 +220,17 @@ export default async function manageAlbum(view, albumId) {
       .filter(Boolean).join(' · ');
 
     mediaSlot.replaceChildren(
-      h('div', { class: 'section-head' },
-        h('h2', { class: 'card__title' }, icon('image', 18), 'Fotos e vídeos'),
+      h('div', { class: 'group__head' },
+        h('h2', { class: 'group__title' }, 'Fotos e vídeos'),
         media.length > 0 && h('button', {
-          class: 'btn btn--small',
+          class: 'link-btn',
           type: 'button',
           onclick: () => openViewer(0, true),
         }, icon('play', 14), 'Slideshow')),
-      summary && h('p', { class: 'muted small' }, summary),
       media.length
         ? mediaGrid(media, (i) => openViewer(i, false))
-        : emptyState('Ainda não há fotos', 'Adiciona as primeiras fotos e vídeos da viagem.'));
+        : h('div', { class: 'card' }, emptyState('Ainda não há fotos', 'Adiciona as primeiras fotos e vídeos da viagem.')),
+      summary && h('p', { class: 'group__footer' }, summary));
   }
 
   function openViewer(index, autoplay) {
@@ -347,8 +350,8 @@ export default async function manageAlbum(view, albumId) {
   // ================================================================ membros
   function renderMembers() {
     membersSlot.replaceChildren(
-      h('h2', { class: 'card__title' }, icon('users', 18), 'Participantes'),
-      h('ul', { class: 'people' },
+      h('h2', { class: 'group__title' }, 'Participantes'),
+      h('ul', { class: 'card list people' },
         members.map((m) => {
           const name = m.profile?.display_name || 'Sem nome';
           return h('li', { class: 'people__item' },
@@ -381,10 +384,9 @@ export default async function manageAlbum(view, albumId) {
   // ================================================================ convites
   function renderInvites() {
     invitesSlot.replaceChildren(
-      h('h2', { class: 'card__title' }, icon('link', 18), 'Convidar participantes'),
-      h('p', { class: 'muted small' }, 'Quem abrir o link de convite e entrar com Google passa a poder adicionar fotos e vídeos. Os links expiram ao fim de 7 dias.'),
-      h('button', { class: 'btn btn--block', type: 'button', onclick: createInvite }, icon('plus', 18), 'Criar link de convite'),
-      invites.length > 0 && h('ul', { class: 'invites' },
+      h('h2', { class: 'group__title' }, 'Convidar participantes'),
+      h('ul', { class: 'card list invites' },
+        h('li', {}, h('button', { class: 'row-btn', type: 'button', onclick: createInvite }, icon('plus', 18), 'Criar link de convite')),
         invites.map((inv) => {
           const link = absoluteUrl(`convite/${inv.token}`);
           return h('li', { class: 'invites__item' },
@@ -401,7 +403,8 @@ export default async function manageAlbum(view, albumId) {
                 type: 'button',
                 onclick: () => revokeInvite(inv),
               }, 'Cancelar')));
-        })));
+        })),
+      h('p', { class: 'group__footer' }, 'Quem abrir o link e entrar com Google passa a poder adicionar fotos e vídeos. Os links expiram ao fim de 7 dias.'));
   }
 
   async function createInvite() {
@@ -435,14 +438,15 @@ export default async function manageAlbum(view, albumId) {
   function renderDanger() {
     if (!isOwner) {
       dangerSlot.replaceChildren(
-        h('button', { class: 'btn btn--ghost btn--danger-text btn--block', type: 'button', onclick: leaveAlbum }, icon('logout', 18), 'Sair do álbum'));
+        h('div', { class: 'card list' },
+          h('button', { class: 'row-btn row-btn--danger', type: 'button', onclick: leaveAlbum }, icon('logout', 18), 'Sair do álbum')));
       return;
     }
     dangerSlot.replaceChildren(
-      h('h2', { class: 'card__title' }, 'Zona de perigo'),
-      h('button', { class: 'btn btn--ghost btn--block', type: 'button', onclick: regenerateLink }, icon('refresh', 18), 'Gerar novo link público'),
-      h('p', { class: 'muted small' }, 'Usa só se o link tiver sido partilhado com quem não devia. Os ímanes antigos deixam de funcionar até serem regravados.'),
-      h('button', { class: 'btn btn--danger btn--block', type: 'button', onclick: deleteAlbum }, icon('trash', 18), 'Apagar álbum'));
+      h('ul', { class: 'card list' },
+        h('li', {}, h('button', { class: 'row-btn', type: 'button', onclick: regenerateLink }, icon('refresh', 18), 'Gerar novo link público')),
+        h('li', {}, h('button', { class: 'row-btn row-btn--danger', type: 'button', onclick: deleteAlbum }, icon('trash', 18), 'Apagar álbum'))),
+      h('p', { class: 'group__footer' }, 'Gera um novo link só se este tiver sido partilhado com quem não devia: os ímanes antigos deixam de funcionar até serem regravados.'));
   }
 
   async function leaveAlbum() {

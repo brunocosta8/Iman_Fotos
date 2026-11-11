@@ -44,9 +44,9 @@ export default async function newAlbum(view) {
   });
 
   view.append(
-    topBar(session, { back: { path: '', label: 'Os meus álbuns' } }),
+    topBar(session, { back: { path: '', label: 'Álbuns' } }),
     h('main', { class: 'container narrow' },
-      h('h1', {}, 'Novo álbum'),
+      h('h1', { class: 'large-title' }, 'Novo álbum'),
       form.el,
       status));
 }
