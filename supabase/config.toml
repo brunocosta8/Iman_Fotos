@@ -1,0 +1,18 @@
+# Configuração mínima para `supabase functions deploy`.
+# O JWT é verificado dentro de cada função (compatível com as novas chaves JWT do Supabase).
+project_id = "imanes-viagens"
+
+[functions.upload-url]
+verify_jwt = false
+
+[functions.confirm-upload]
+verify_jwt = false
+
+[functions.delete-media]
+verify_jwt = false
+
+[functions.delete-album]
+verify_jwt = false
+
+[functions.maintenance]
+verify_jwt = false
