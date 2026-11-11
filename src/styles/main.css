@@ -1,6 +1,6 @@
 /* =========================================================================
    Ímanes de Viagem — estilos ao estilo iOS
-   Bege + vermelho suave, letra do sistema (SF Pro no iPhone), secções
+   Bege + vermelho-laranja, letra do sistema (SF Pro no iPhone), secções
    agrupadas como nas Definições, barras translúcidas.
    ========================================================================= */
 
@@ -12,10 +12,10 @@
   --separator: rgb(80 55 30 / 13%);
   --text: #1f1a17;
   --muted: #8c8278;
-  --accent: #e0675c;        /* vermelho suave */
-  --accent-strong: #c24d43; /* texto/links (contraste AA) */
+  --accent: #e05a33;        /* vermelho-laranja */
+  --accent-strong: #c2461f; /* texto/links (contraste AA) */
   --accent-ink: #ffffff;
-  --accent-soft: #fbe3df;
+  --accent-soft: #fbe0d6;
   --neutral-bar: #c4a586;   /* barra de espaço normal */
   --warn: #f59a23;          /* laranja ≥ 80% */
   --danger: #e5383b;        /* vermelho ≥ 95% / apagar */
@@ -38,10 +38,10 @@
     --separator: rgb(255 240 225 / 11%);
     --text: #f6efe7;
     --muted: #a59b91;
-    --accent: #ef7d72;
-    --accent-strong: #f59b92;
+    --accent: #f07a52;
+    --accent-strong: #f79a7a;
     --accent-ink: #2a1210;
-    --accent-soft: #42261f;
+    --accent-soft: #43261b;
     --neutral-bar: #b39373;
     --shadow: none;
     --blur-bg: rgb(26 23 20 / 78%);
@@ -398,8 +398,10 @@ code {
 .btn--google {
   min-height: 54px;
   padding: 14px 22px;
-  background: var(--text);
-  color: var(--bg);
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
 }
 
 .icon-btn {
@@ -489,7 +491,7 @@ code {
   width: 108px;
   height: 108px;
   border-radius: 24px;
-  box-shadow: 0 12px 32px rgb(224 103 92 / 28%);
+  box-shadow: 0 12px 32px rgb(224 90 51 / 28%);
   margin-bottom: 12px;
 }
 
@@ -526,7 +528,7 @@ code {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: linear-gradient(150deg, #f2b8a8, #e0675c 55%, #b9584f);
+  background: linear-gradient(150deg, #f4ad92, #e05a33 55%, #b03f1d);
   box-shadow: var(--shadow);
   color: #fff;
   text-decoration: none;
@@ -665,7 +667,7 @@ code {
 
 .hero--plain {
   min-height: 34vh;
-  background: linear-gradient(150deg, #f2b8a8, #e0675c 55%, #b9584f);
+  background: linear-gradient(150deg, #f4ad92, #e05a33 55%, #b03f1d);
 }
 
 .hero__img {
@@ -812,7 +814,7 @@ code {
 
 .manage-hero__cover {
   aspect-ratio: 16 / 10;
-  background: linear-gradient(150deg, #f2b8a8, #e0675c 55%, #b9584f);
+  background: linear-gradient(150deg, #f4ad92, #e05a33 55%, #b03f1d);
   display: grid;
   place-items: center;
 }
