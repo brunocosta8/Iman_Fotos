@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Privacidade · Ímanes de Viagem</title>
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #f6f0e8; --text: #1f1a17; --muted: #8c8278; --accent: #c2461f; color-scheme: light dark; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #1a1714; --text: #f6efe7; --muted: #a59b91; --accent: #f79a7a; } }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 680px; margin: 0 auto; padding: 40px 20px 64px; }
+    h1 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    h2 { font-size: 1.15rem; margin: 28px 0 6px; }
+    p, li { color: var(--text); }
+    .muted { color: var(--muted); }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Política de privacidade</h1>
+  <p class="muted">Ímanes de Viagem · última atualização: 12 de novembro de 2026</p>
+
+  <p>O Ímanes de Viagem é uma aplicação pessoal e sem fins comerciais para guardar álbuns de fotos de viagens e abri-los a partir de ímanes com NFC.</p>
+
+  <h2>Que dados são guardados</h2>
+  <ul>
+    <li><strong>Conta Google</strong> (só para quem gere álbuns): nome, endereço de email e fotografia de perfil, fornecidos pelo início de sessão com Google.</li>
+    <li><strong>Álbuns</strong>: nome, datas e local que os participantes escrevem.</li>
+    <li><strong>Fotos e vídeos</strong> carregados pelos participantes. As fotos são reduzidas no telemóvel antes do envio e os metadados de localização (GPS) são removidos. Os ficheiros originais não são guardados.</li>
+  </ul>
+  <p>Quem apenas vê um álbum através do link ou do íman não precisa de conta e não fica registado.</p>
+
+  <h2>Para que são usados</h2>
+  <p>Só para o funcionamento da aplicação: identificar quem gere cada álbum, mostrar os participantes e apresentar as fotos. Não há publicidade, não há venda nem partilha de dados com terceiros para outros fins, e não são usados cookies de rastreio.</p>
+
+  <h2>Quem pode ver</h2>
+  <p>Cada álbum tem um link público difícil de adivinhar. Qualquer pessoa com esse link (ou com o íman) pode ver as fotos e vídeos do álbum. O nome e o email dos participantes não aparecem na página pública; só os outros participantes do mesmo álbum veem o nome e a fotografia de perfil.</p>
+
+  <h2>Onde ficam os dados</h2>
+  <p>Os dados da conta e dos álbuns ficam no Supabase (base de dados e autenticação) e os ficheiros de fotos e vídeos no Cloudflare R2. O site é servido pelo GitHub Pages.</p>
+
+  <h2>Apagar dados</h2>
+  <p>Quem carregou uma foto ou vídeo pode apagá-lo a qualquer momento. O criador de um álbum pode apagar o álbum inteiro, o que remove todos os ficheiros. Para apagar a conta e os respetivos dados, contacta o criador do álbum em que participas.</p>
+
+  <p><a href="./">← Voltar à aplicação</a></p>
+</main>
+</body>
+</html>
