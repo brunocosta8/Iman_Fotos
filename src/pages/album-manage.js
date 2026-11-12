@@ -319,8 +319,9 @@ export default async function manageAlbum(view, albumId) {
   /** Envia ficheiros um a um; devolve as linhas de media criadas. */
   async function handleFiles(files) {
     let uploadFile;
+    let detectKind;
     try {
-      ({ uploadFile } = await import('../lib/upload.js'));
+      ({ uploadFile, detectKind } = await import('../lib/upload.js'));
     } catch {
       toast('A app foi atualizada. Recarrega a página e tenta outra vez.', { type: 'error', ms: 6000 });
       return [];
@@ -337,8 +338,10 @@ export default async function manageAlbum(view, albumId) {
     });
 
     const created = [];
+    let stopped = false; // espaço esgotado: não vale a pena continuar
     uploading += 1;
-    for (const row of rows) {
+
+    async function processRow(row) {
       const set = (text, progress) => {
         row.label.textContent = text;
         if (progress != null) row.bar.style.width = `${Math.round(progress * 100)}%`;
@@ -367,9 +370,29 @@ export default async function manageAlbum(view, albumId) {
           'aria-label': 'Fechar',
           onclick: () => row.li.remove(),
         }, icon('close', 14)));
-        if (err?.code === 'quota_exceeded') break;
+        if (err?.code === 'quota_exceeded') stopped = true;
       }
     }
+
+    // Várias filas em paralelo: 3 fotos ao mesmo tempo e 1 vídeo
+    // (converter vídeos gasta muita memória no telemóvel).
+    const isVideo = (r) => detectKind(r.file) === 'video';
+    const pool = async (list, workers) => {
+      const next = async () => {
+        while (list.length && !stopped) await processRow(list.shift());
+      };
+      await Promise.all(Array.from({ length: Math.min(workers, list.length) }, next));
+    };
+    await Promise.all([
+      pool(rows.filter((r) => !isVideo(r)), 3),
+      pool(rows.filter(isVideo), 1),
+    ]);
+    for (const r of rows) {
+      if (!r.li.classList.contains('is-done') && !r.li.classList.contains('is-error')) {
+        r.label.textContent = 'Não enviado: espaço esgotado';
+      }
+    }
+
     uploading -= 1;
     if (!editing) renderHero();
     if (isOwner) refreshStorage();
