@@ -179,10 +179,11 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
   }
 
   function go(delta) {
-    show(index + delta);
+    show(index + delta, Math.sign(delta));
   }
 
-  function show(i) {
+  /** dir: 1 = avançar (entra pela direita), -1 = recuar, 0 = sem animação */
+  function show(i, dir = 0) {
     if (closed || !items.length) return;
     cancelAnimationFrame(rafId);
     index = (i + items.length) % items.length;
@@ -199,22 +200,33 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     bg.hidden = !bgKey;
     if (bgKey) bg.src = mediaUrl(bgKey);
 
-    // Passagem suave: a nova foto aparece por cima da anterior quando já está
-    // carregada (esbatido), e só depois a anterior é removida.
+    // Passagem: a nova foto desliza para dentro e empurra a anterior para fora.
+    // Espera que a foto carregue (até 0,6 s; entretanto mostra a miniatura).
     const prev = stage.lastElementChild;
     if (prev?.tagName === 'VIDEO') prev.pause();
+    const slide = Boolean(dir && prev);
     let revealed = false;
     let node;
     const reveal = () => {
       if (revealed || closed) return;
       revealed = true;
-      requestAnimationFrame(() => node.classList.add('is-in'));
-      if (prev) setTimeout(() => prev.remove(), 800);
+      if (!prev) return;
+      if (slide) {
+        prev.classList.add(dir > 0 ? 'to-left' : 'to-right');
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          node.classList.remove('from-left', 'from-right');
+        }));
+        setTimeout(() => prev.remove(), 450);
+      } else {
+        prev.remove();
+      }
     };
 
     if (item.kind === 'photo') {
       node = h('img', { class: 'st__media', alt: '', decoding: 'async' });
       node.draggable = false;
+      if (item.thumb_key) node.style.backgroundImage = `url("${mediaUrl(item.thumb_key)}")`;
+      setTimeout(reveal, 600);
       const ready = () => { photoReady = true; reveal(); };
       node.addEventListener('load', ready, { once: true });
       node.addEventListener('error', ready, { once: true });
@@ -232,13 +244,14 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
       node.addEventListener('ended', () => go(1));
       node.addEventListener('error', () => setTimeout(() => { if (current() === item) go(1); }, 1500));
       node.addEventListener('loadeddata', reveal, { once: true });
-      setTimeout(reveal, 1200); // mostra pelo menos o poster se o vídeo demorar
+      setTimeout(reveal, 600); // mostra pelo menos o poster se o vídeo demorar
       muteBtn.hidden = false;
       updateMuteBtn();
       if (!paused) playVideo(node);
     }
     // Toques muito rápidos: nunca mais de duas camadas.
     while (stage.children.length > 1) stage.firstElementChild.remove();
+    if (slide) node.classList.add(dir > 0 ? 'from-right' : 'from-left');
     stage.append(node);
     preload(index + 1);
     preload(index - 1);

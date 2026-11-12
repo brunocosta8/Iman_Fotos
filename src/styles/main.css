@@ -1187,12 +1187,18 @@ code {
   max-width: none;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.7s ease;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.38s cubic-bezier(0.22, 0.7, 0.2, 1);
+  will-change: transform;
   -webkit-user-drag: none;
 }
 
-.st__media.is-in { opacity: 1; }
+/* deslizar lateral entre fotos */
+.st__media.from-right { transform: translateX(100%); transition: none; }
+.st__media.from-left { transform: translateX(-100%); transition: none; }
+.st__media.to-left { transform: translateX(-100%); }
+.st__media.to-right { transform: translateX(100%); }
 
 .st__shade {
   position: absolute;
