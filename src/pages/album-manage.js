@@ -78,7 +78,14 @@ export default async function manageAlbum(view, albumId) {
     onchange: () => {
       const files = [...fileInput.files];
       fileInput.value = '';
-      if (files.length) handleFiles(files);
+      if (files.length) {
+        handleFiles(files).catch((err) => {
+          console.error(err);
+          toast(`Não foi possível enviar: ${errorMessage(err)}`, { type: 'error', ms: 6000 });
+        });
+      } else {
+        toast('Nenhum ficheiro selecionado.', { type: 'error' });
+      }
     },
   });
 
@@ -295,7 +302,13 @@ export default async function manageAlbum(view, albumId) {
 
   /** Envia ficheiros um a um; devolve as linhas de media criadas. */
   async function handleFiles(files) {
-    const { uploadFile } = await import('../lib/upload.js');
+    let uploadFile;
+    try {
+      ({ uploadFile } = await import('../lib/upload.js'));
+    } catch {
+      toast('A app foi atualizada. Recarrega a página e tenta outra vez.', { type: 'error', ms: 6000 });
+      return [];
+    }
     const rows = files.map((file) => {
       const label = h('span', { class: 'queue__status' }, 'Em espera');
       const bar = h('span', { class: 'queue__bar' });
