@@ -11,7 +11,7 @@ const MESSAGES = {
   video_too_large: 'O vídeo tem mais de 30 MB e não foi possível reduzi-lo neste telemóvel.',
   video_too_long: 'O vídeo tem mais de 30 segundos.',
   video_unreadable: 'Não foi possível ler este vídeo.',
-  image_decode: 'Não foi possível abrir esta imagem neste browser.',
+  image_decode: 'Não foi possível abrir esta foto. Se o iPhone tiver uma versão antiga do iOS, atualiza-o.',
   quota_exceeded: 'Espaço esgotado: foi atingido o limite de 9,5 GB.',
   upload_failed: 'O envio falhou. Tenta outra vez.',
   upload_missing: 'O envio não chegou ao servidor. Tenta outra vez.',

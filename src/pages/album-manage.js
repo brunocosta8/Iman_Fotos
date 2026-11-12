@@ -110,7 +110,7 @@ export default async function manageAlbum(view, albumId) {
         h('h2', { class: 'group__title' }, 'Adicionar'),
         h('div', { class: 'card' },
           h('div', { class: 'pick-row' },
-            h('button', { class: 'btn btn--primary', type: 'button', onclick: () => pickFiles('image/*') },
+            h('button', { class: 'btn btn--primary', type: 'button', onclick: () => pickFiles('image/*,image/heic,image/heif') },
               icon('image', 18), 'Fotos'),
             h('button', { class: 'btn btn--primary', type: 'button', onclick: () => pickFiles('video/*') },
               icon('play', 16), 'Vídeos')),
