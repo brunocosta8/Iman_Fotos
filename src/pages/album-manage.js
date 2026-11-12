@@ -70,12 +70,18 @@ export default async function manageAlbum(view, albumId) {
   const invitesSlot = h('section', { class: 'group' });
   const dangerSlot = h('section', { class: 'group' });
 
+  // Aviso enquanto o iPhone prepara os ficheiros escolhidos (com vídeos pode demorar).
+  const receiving = h('p', { class: 'receiving', hidden: true, role: 'status' },
+    h('span', { class: 'spinner' }), 'A receber os ficheiros do telemóvel…');
+  const stopReceiving = () => { receiving.hidden = true; };
+
   const fileInput = h('input', {
     type: 'file',
-    accept: 'image/*,video/*',
     multiple: true,
     hidden: true,
+    oncancel: stopReceiving,
     onchange: () => {
+      stopReceiving();
       const files = [...fileInput.files];
       fileInput.value = '';
       if (files.length) {
@@ -83,11 +89,17 @@ export default async function manageAlbum(view, albumId) {
           console.error(err);
           toast(`Não foi possível enviar: ${errorMessage(err)}`, { type: 'error', ms: 6000 });
         });
-      } else {
-        toast('Nenhum ficheiro selecionado.', { type: 'error' });
       }
     },
   });
+
+  function pickFiles(accept) {
+    fileInput.accept = accept;
+    receiving.hidden = false;
+    clearTimeout(pickFiles.timer);
+    pickFiles.timer = setTimeout(stopReceiving, 3 * 60 * 1000); // se o browser não avisar o "cancelar"
+    fileInput.click();
+  }
 
   view.replaceChildren(
     topBar(session, { back: { path: '', label: 'Álbuns' } }),
@@ -97,12 +109,16 @@ export default async function manageAlbum(view, albumId) {
       h('section', { class: 'group' },
         h('h2', { class: 'group__title' }, 'Adicionar'),
         h('div', { class: 'card' },
-          h('button', { class: 'btn btn--primary btn--block', type: 'button', onclick: () => fileInput.click() },
-            icon('plus', 18), 'Escolher fotos e vídeos'),
+          h('div', { class: 'pick-row' },
+            h('button', { class: 'btn btn--primary', type: 'button', onclick: () => pickFiles('image/*') },
+              icon('image', 18), 'Fotos'),
+            h('button', { class: 'btn btn--primary', type: 'button', onclick: () => pickFiles('video/*') },
+              icon('play', 16), 'Vídeos')),
           fileInput,
+          receiving,
           queue,
           storageSlot),
-        h('p', { class: 'group__footer' }, 'As fotos são reduzidas no telemóvel antes do envio. Vídeos até 30 segundos.')),
+        h('p', { class: 'group__footer' }, 'Podes escolher muitas fotos de uma vez. Vídeos (até 30 segundos) envia-os poucos de cada vez: o iPhone demora a prepará-los.')),
       mediaSlot,
       membersSlot,
       invitesSlot,

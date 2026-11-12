@@ -872,6 +872,22 @@ code {
 
 .nfc__help li + li { margin-top: 5px; }
 
+/* escolher ficheiros */
+.pick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.receiving {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
 /* fila de envio */
 .queue {
   list-style: none;
