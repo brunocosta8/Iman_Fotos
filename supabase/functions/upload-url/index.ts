@@ -1,5 +1,4 @@
-// POST { album_id, kind, mime, size, thumb_mime?, thumb_size?, width?, height?, duration_s?, taken_at?, title? }
-// kind: 'photo' | 'video' | 'audio' (música de fundo do álbum, só o owner)
+// POST { album_id, kind, mime, size, thumb_mime?, thumb_size?, width?, height?, duration_s?, taken_at? }
 // → { media_id, upload: {url, headers}, thumb: {url, headers} | null }
 //
 // Verifica: login, membro do álbum, tipo/tamanho/duração e limite de espaço (9,5 GB).
@@ -7,7 +6,7 @@ import { handler, HttpError, readJson, requireUuid } from '../_shared/http.ts';
 import { admin, getRole, requireUser } from '../_shared/supabase.ts';
 import { presignPut } from '../_shared/r2.ts';
 import {
-  AUDIO_MAX_BYTES, EXT, PHOTO_MAX_BYTES, THUMB_EXT, THUMB_MAX_BYTES, UPLOAD_BLOCK_BYTES,
+  EXT, PHOTO_MAX_BYTES, THUMB_EXT, THUMB_MAX_BYTES, UPLOAD_BLOCK_BYTES,
   VIDEO_MAX_BYTES, VIDEO_MAX_SECONDS,
 } from '../_shared/limits.ts';
 
@@ -19,11 +18,9 @@ Deno.serve(handler(async (req) => {
 
   const albumId = requireUuid(b.album_id);
   const kind = b.kind;
-  if (kind !== 'photo' && kind !== 'video' && kind !== 'audio') throw new HttpError(400, 'bad_request');
+  if (kind !== 'photo' && kind !== 'video') throw new HttpError(400, 'bad_request');
 
-  const role = await getRole(albumId, user.id);
-  if (!role) throw new HttpError(403, 'not_a_member');
-  if (kind === 'audio' && role !== 'owner') throw new HttpError(403, 'forbidden');
+  if (!(await getRole(albumId, user.id))) throw new HttpError(403, 'not_a_member');
 
   const mime = String(b.mime ?? '');
   const ext = EXT[kind][mime];
@@ -31,8 +28,7 @@ Deno.serve(handler(async (req) => {
 
   const size = posInt(b.size);
   if (!size) throw new HttpError(400, 'bad_request');
-  const maxBytes = kind === 'photo' ? PHOTO_MAX_BYTES : kind === 'video' ? VIDEO_MAX_BYTES : AUDIO_MAX_BYTES;
-  if (size > maxBytes) {
+  if (size > (kind === 'photo' ? PHOTO_MAX_BYTES : VIDEO_MAX_BYTES)) {
     throw new HttpError(413, 'file_too_large');
   }
 
@@ -46,7 +42,7 @@ Deno.serve(handler(async (req) => {
 
   let thumbMime: string | null = null;
   let thumbSize = 0;
-  if (b.thumb_mime && kind !== 'audio') {
+  if (b.thumb_mime) {
     thumbMime = String(b.thumb_mime);
     if (!THUMB_EXT[thumbMime]) throw new HttpError(415, 'unsupported_type');
     thumbSize = posInt(b.thumb_size) ?? 0;
@@ -76,10 +72,6 @@ Deno.serve(handler(async (req) => {
   if (error) {
     if (error.message?.includes('quota_exceeded')) throw new HttpError(507, 'quota_exceeded');
     throw error;
-  }
-
-  if (kind === 'audio' && typeof b.title === 'string' && b.title.trim()) {
-    await admin.from('media').update({ title: b.title.trim().slice(0, 200) }).eq('id', row.id);
   }
 
   const upload = await presignPut(row.object_key, mime, size);
