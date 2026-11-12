@@ -1194,16 +1194,6 @@ code {
 
 .st__media.is-in { opacity: 1; }
 
-/* zoom muito lento enquanto a foto está no ecrã */
-img.st__media.is-in { animation: st-zoom 7s ease-out forwards; }
-
-@keyframes st-zoom {
-  from { transform: scale(1); }
-  to { transform: scale(1.05); }
-}
-
-.st.is-paused img.st__media { animation-play-state: paused; }
-
 .st__shade {
   position: absolute;
   inset: 0;
