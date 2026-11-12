@@ -19,7 +19,9 @@ export default async function home(view) {
     h('main', { class: 'container' },
       h('div', { class: 'section-head' },
         h('h1', { class: 'large-title' }, 'Álbuns'),
-        h('a', { class: 'btn btn--tinted btn--small', href: url('album/novo'), 'data-link': true }, icon('plus', 16), 'Novo')),
+        h('div', { class: 'section-head__btns' },
+          h('a', { class: 'btn btn--tinted btn--small', href: url('mapa'), 'data-link': true }, icon('pin', 16), 'Mapa'),
+          h('a', { class: 'btn btn--tinted btn--small', href: url('album/novo'), 'data-link': true }, icon('plus', 16), 'Novo'))),
       list,
       storageSlot));
 

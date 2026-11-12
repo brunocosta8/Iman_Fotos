@@ -12,7 +12,7 @@ import { h, icon, spinner } from '../lib/dom.js';
 import { formatDateRange, formatExpiry, plural, sortMedia } from '../lib/format.js';
 import { absoluteUrl, navigate, url } from '../lib/router.js';
 import { getSession, supabase } from '../lib/supabase.js';
-import { albumForm } from './album-new.js';
+import { albumForm, withCoordsFallback } from './album-new.js';
 
 export default async function manageAlbum(view, albumId) {
   const session = await getSession();
@@ -154,11 +154,8 @@ export default async function manageAlbum(view, albumId) {
         const values = form.values();
         if (!values) return;
         form.setBusy(true);
-        const { data, error } = await supabase.from('albums')
-          .update(values.fields)
-          .eq('id', album.id)
-          .select('name, location, start_date, end_date')
-          .single();
+        const { data, error } = await withCoordsFallback(values.fields, (fields) =>
+          supabase.from('albums').update(fields).eq('id', album.id).select('*').single());
         if (error) {
           form.setBusy(false);
           toast(errorMessage(error), { type: 'error' });

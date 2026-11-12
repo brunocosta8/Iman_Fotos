@@ -19,11 +19,8 @@ export default async function newAlbum(view) {
     if (!values) return;
     form.setBusy(true);
     try {
-      const { data: album, error } = await supabase
-        .from('albums')
-        .insert(values.fields)
-        .select('id')
-        .single();
+      const { data: album, error } = await withCoordsFallback(values.fields, (fields) =>
+        supabase.from('albums').insert(fields).select('id').single());
       if (error) throw error;
 
       if (values.coverFile) {
@@ -50,6 +47,20 @@ export default async function newAlbum(view) {
       h('h1', { class: 'large-title' }, 'Novo álbum'),
       form.el,
       status));
+}
+
+/**
+ * Grava com as coordenadas do local; se a base de dados ainda não tiver essas
+ * colunas (atualização por fazer), grava sem elas.
+ */
+export async function withCoordsFallback(fields, run) {
+  const res = await run(fields);
+  const msg = `${res.error?.code || ''} ${res.error?.message || ''}`;
+  if (res.error && /latitude|longitude|PGRST204/.test(msg) && ('latitude' in fields || 'longitude' in fields)) {
+    const { latitude, longitude, ...rest } = fields;
+    return run(rest);
+  }
+  return res;
 }
 
 /**
@@ -94,12 +105,20 @@ export function albumForm({ album = {}, submitLabel, withCover = false, onCancel
         toast('A data de fim é anterior à de início.', { type: 'error' });
         return null;
       }
+      const loc = location.value.trim() || null;
+      let coords = {};
+      if (location.dataset.lat) {
+        coords = { latitude: Number(location.dataset.lat), longitude: Number(location.dataset.lon) };
+      } else if (loc !== (album.location || null) && album.id) {
+        coords = { latitude: null, longitude: null }; // local mudado à mão: o mapa procura-o pelo nome
+      }
       return {
         fields: {
           name: n,
-          location: location.value.trim() || null,
+          location: loc,
           start_date: start.value || null,
           end_date: end.value || null,
+          ...coords,
         },
         coverFile: cover?.files?.[0] || null,
       };

@@ -12,7 +12,34 @@ function flag(code) {
   return String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 }
 
-/** Liga sugestões a um <input> que já está dentro de um .field */
+/**
+ * Coordenadas de um local escrito em texto (ex.: "Ponta Delgada, Portugal").
+ * Guarda o resultado no telemóvel para não repetir pedidos.
+ */
+export async function geocodePlace(text) {
+  const key = `geo:${text.trim().toLowerCase()}`;
+  try {
+    const cached = localStorage.getItem(key);
+    if (cached) return JSON.parse(cached);
+  } catch { /* sem armazenamento local */ }
+  const name = text.split(',')[0].trim();
+  if (name.length < 2) return null;
+  const res = await fetch(`${API}?name=${encodeURIComponent(name)}&count=10&language=pt&format=json`);
+  if (!res.ok) return null;
+  const { results = [] } = await res.json();
+  // Se o texto tiver o país ("…, Espanha"), prefere esse país
+  const country = text.split(',').slice(1).join(',').trim().toLowerCase();
+  const r = results.find((x) => country && x.country?.toLowerCase() === country) || results[0];
+  const hit = r ? { latitude: r.latitude, longitude: r.longitude } : null;
+  try { localStorage.setItem(key, JSON.stringify(hit)); } catch { /* ignorar */ }
+  return hit;
+}
+
+/**
+ * Liga sugestões a um <input> que já está dentro de um .field.
+ * Ao escolher uma sugestão, guarda as coordenadas em input.dataset.lat/lon
+ * (apagadas se o texto for depois alterado à mão).
+ */
 export function attachPlaceSuggestions(input) {
   const list = h('ul', { class: 'suggest', role: 'listbox', hidden: true });
   input.setAttribute('role', 'combobox');
@@ -36,6 +63,10 @@ export function attachPlaceSuggestions(input) {
   const choose = (r) => {
     // "Ponta Delgada, Portugal" — com a região só quando ajuda a distinguir
     input.value = [r.name, r.country].filter(Boolean).join(', ');
+    if (r.latitude != null && r.longitude != null) {
+      input.dataset.lat = String(r.latitude);
+      input.dataset.lon = String(r.longitude);
+    }
     hide();
     input.dispatchEvent(new Event('change', { bubbles: true }));
   };
@@ -92,6 +123,8 @@ export function attachPlaceSuggestions(input) {
   }
 
   input.addEventListener('input', () => {
+    delete input.dataset.lat;
+    delete input.dataset.lon;
     clearTimeout(timer);
     const q = input.value.trim();
     if (q.length < 2) {

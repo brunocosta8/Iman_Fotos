@@ -14,6 +14,7 @@ const routes = [
   [/^album\/novo$/, () => import('./pages/album-new.js')],
   [/^album\/([0-9a-f-]{36})$/, () => import('./pages/album-manage.js')],
   [/^convite\/([A-Za-z0-9]{22})$/, () => import('./pages/invite.js')],
+  [/^mapa$/, () => import('./pages/map.js')],
 ];
 
 async function boot() {

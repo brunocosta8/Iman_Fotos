@@ -898,6 +898,67 @@ code {
 
 .sort-reset { margin-top: 14px; }
 
+/* mapa */
+.section-head__btns { display: flex; gap: 8px; }
+
+.map-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  isolation: isolate; /* as camadas do Leaflet não passam por cima da barra de topo */
+}
+
+.map {
+  height: calc(100dvh - 230px - env(safe-area-inset-top));
+  min-height: 360px;
+  background: var(--fill);
+}
+
+.map-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgb(246 240 232 / 70%);
+}
+
+.pin-icon { background: none; border: 0; }
+
+.pin {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 750;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 30%);
+  transition: transform 0.15s;
+}
+
+.pin img { width: 100%; height: 100%; object-fit: cover; }
+.leaflet-marker-icon:hover .pin { transform: scale(1.08); }
+
+.leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; }
+.leaflet-popup-content { margin: 0; width: auto !important; }
+.leaflet-container { font: inherit; }
+.leaflet-bar { border: 0 !important; border-radius: 12px !important; overflow: hidden; box-shadow: 0 4px 14px rgb(0 0 0 / 18%) !important; }
+.leaflet-bar a { width: 38px !important; height: 38px !important; line-height: 38px !important; color: var(--text) !important; background: var(--surface) !important; border-color: var(--separator) !important; }
+.leaflet-control-attribution { border-top-left-radius: 8px; font-size: 10px; }
+
+.map-pop { display: flex; flex-direction: column; gap: 3px; padding: 0 0 12px; }
+.map-pop__img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; margin-bottom: 8px; }
+.map-pop__title { padding: 0 12px; font-size: 1rem; color: #1f1a17; }
+.map-pop__meta { padding: 0 12px; font-size: 0.8125rem; color: #8c8278; }
+.map-pop__btns { display: flex; gap: 6px; padding: 8px 12px 0; }
+.map-pop__btns .btn { flex: 1; }
+
 /* ------------------------------------------------------------------ gerir álbum */
 
 .manage-hero {

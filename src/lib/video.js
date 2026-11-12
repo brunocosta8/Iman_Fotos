@@ -19,10 +19,14 @@ export async function processVideo(file, onProgress) {
   let duration = null;
   let width = null;
   let height = null;
+  let takenAt = null;
 
   try {
     input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
     duration = await input.computeDuration();
+    // Data de gravação (iPhone: com.apple.quicktime.creationdate)
+    const tags = await input.getMetadataTags().catch(() => ({}));
+    if (tags.date instanceof Date && !isNaN(tags.date)) takenAt = tags.date.toISOString();
     const track = await input.getPrimaryVideoTrack();
     if (track) {
       width = track.displayWidth;
@@ -39,6 +43,7 @@ export async function processVideo(file, onProgress) {
     ({ duration, width, height } = meta);
   }
   if (!Number.isFinite(duration) || duration <= 0) throw new AppError('video_unreadable');
+  if (!takenAt) takenAt = await readMp4CreationDate(file).catch(() => null);
   if (duration > VIDEO_MAX_SECONDS) throw new AppError('video_too_long');
 
   let converted = null;
@@ -72,7 +77,7 @@ export async function processVideo(file, onProgress) {
   let poster = await capturePoster(blob).catch(() => null);
   if (!poster && blob !== file) poster = await capturePoster(file).catch(() => null);
 
-  return { blob, mime, width, height, duration, thumb: poster };
+  return { blob, mime, width, height, duration, thumb: poster, takenAt };
 }
 
 async function transcode(input, width, height, onProgress) {
@@ -166,4 +171,37 @@ function capturePoster(blob) {
       }
     };
   });
+}
+
+/**
+ * Data de criação guardada no cabeçalho "mvhd" de ficheiros MP4/MOV (Android e
+ * outros). Lê só os cabeçalhos das caixas e a caixa "moov", nunca o vídeo todo.
+ */
+export async function readMp4CreationDate(file) {
+  const MAC_EPOCH_OFFSET = 2082844800; // segundos entre 1904-01-01 e 1970-01-01
+  let offset = 0;
+  for (let guard = 0; offset + 8 <= file.size && guard < 64; guard++) {
+    const head = new DataView(await file.slice(offset, offset + 16).arrayBuffer());
+    let size = head.getUint32(0);
+    const type = String.fromCharCode(head.getUint8(4), head.getUint8(5), head.getUint8(6), head.getUint8(7));
+    if (size === 1) size = head.getUint32(8) * 2 ** 32 + head.getUint32(12);
+    else if (size === 0) size = file.size - offset;
+    if (size < 8) return null;
+    if (type === 'moov') {
+      const moov = new Uint8Array(await file.slice(offset, offset + Math.min(size, 8 * 1024 * 1024)).arrayBuffer());
+      for (let i = 8; i < moov.length - 20; i++) {
+        if (moov[i] === 0x6d && moov[i + 1] === 0x76 && moov[i + 2] === 0x68 && moov[i + 3] === 0x64) { // "mvhd"
+          const v = new DataView(moov.buffer, moov.byteOffset + i + 4);
+          const version = v.getUint8(0);
+          const secs = version === 1 ? v.getUint32(4) * 2 ** 32 + v.getUint32(8) : v.getUint32(4);
+          if (!secs) return null;
+          const date = new Date((secs - MAC_EPOCH_OFFSET) * 1000);
+          return date.getUTCFullYear() > 1990 && date.getTime() < Date.now() + 864e5 ? date.toISOString() : null;
+        }
+      }
+      return null;
+    }
+    offset += size;
+  }
+  return null;
 }
