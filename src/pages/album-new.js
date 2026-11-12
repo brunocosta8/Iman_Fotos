@@ -1,4 +1,5 @@
 import { loginRequired, topBar } from '../components/layout.js';
+import { attachPlaceSuggestions } from '../components/place-input.js';
 import { toast } from '../components/toast.js';
 import { errorMessage } from '../lib/api.js';
 import { h, icon } from '../lib/dom.js';
@@ -57,7 +58,7 @@ export default async function newAlbum(view) {
  */
 export function albumForm({ album = {}, submitLabel, withCover = false, onCancel = null }) {
   const name = h('input', { name: 'name', required: true, maxLength: 120, value: album.name || '', autocomplete: 'off', placeholder: 'Ex.: Açores 2025' });
-  const location = h('input', { name: 'location', maxLength: 120, value: album.location || '', autocomplete: 'off', placeholder: 'Ex.: São Miguel, Portugal' });
+  const location = h('input', { name: 'location', maxLength: 120, value: album.location || '', autocomplete: 'off', placeholder: 'Escreve uma cidade…' });
   const start = h('input', { name: 'start_date', type: 'date', value: album.start_date || '' });
   const end = h('input', { name: 'end_date', type: 'date', value: album.end_date || '' });
   const cover = withCover ? h('input', { name: 'cover', type: 'file', accept: 'image/*' }) : null;
@@ -77,6 +78,7 @@ export function albumForm({ album = {}, submitLabel, withCover = false, onCancel
     h('div', { class: 'form__actions' },
       onCancel && h('button', { class: 'btn btn--ghost', type: 'button', onclick: onCancel }, 'Cancelar'),
       submit));
+  attachPlaceSuggestions(location);
 
   return {
     el,

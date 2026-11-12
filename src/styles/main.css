@@ -1074,6 +1074,71 @@ code {
 
 .field:focus-within { box-shadow: 0 0 0 2px var(--accent); }
 
+/* sugestões de locais */
+.field { position: relative; }
+
+.suggest {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgb(60 40 20 / 18%), 0 0 0 0.5px var(--separator);
+  animation: suggest-in 0.15s ease-out;
+}
+
+@keyframes suggest-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.suggest__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggest__item:hover,
+.suggest__item.is-active { background: var(--fill); }
+
+.suggest__flag {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  font-size: 1.35rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.suggest__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.suggest__name { font-weight: 600; }
+
+.suggest__sub {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .field__label {
   font-size: 0.8125rem;
   font-weight: 500;
