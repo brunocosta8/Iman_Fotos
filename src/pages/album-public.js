@@ -63,6 +63,14 @@ export default async function publicAlbum(view, slug) {
         : h('p', { class: 'empty muted' }, 'Ainda não há fotos neste álbum.'),
       manageSlot));
 
+  // Pré-visualização pedida a partir da gestão: faixa no topo e sem atalhos de gestão.
+  if (new URLSearchParams(location.search).has('convidado')) {
+    view.prepend(h('div', { class: 'preview-banner', role: 'status' },
+      h('span', { class: 'preview-banner__text' }, icon('eye', 16), 'Vista de convidado'),
+      h('a', { class: 'preview-banner__back', href: url(`album/${album.id}`), 'data-link': true }, 'Voltar')));
+    return;
+  }
+
   // Se quem abriu for membro, mostra um atalho para gerir.
   const session = await getSession();
   if (session) {

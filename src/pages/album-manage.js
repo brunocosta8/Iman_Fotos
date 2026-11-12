@@ -204,7 +204,7 @@ export default async function manageAlbum(view, albumId) {
           dates && h('p', { class: 'meta' }, icon('calendar', 14), dates),
           album.location && h('p', { class: 'meta' }, icon('pin', 14), album.location),
           h('div', { class: 'button-row' },
-            h('a', { class: 'btn btn--tinted btn--small', href: url(`a/${album.slug}`), 'data-link': true }, icon('eye', 16), 'Ver álbum'),
+            h('a', { class: 'btn btn--primary btn--small', href: url(`a/${album.slug}?convidado`), 'data-link': true }, icon('eye', 16), 'Ver como convidado'),
             isOwner && h('button', {
               class: 'btn btn--tinted btn--small',
               type: 'button',

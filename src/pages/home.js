@@ -26,7 +26,7 @@ export default async function home(view) {
   const [albumsRes, bar] = await Promise.all([
     supabase
       .from('albums')
-      .select(`id, name, location, start_date, end_date,
+      .select(`id, slug, name, location, start_date, end_date,
                cover:media!albums_cover_media_id_fkey(object_key, thumb_key),
                album_members!inner(role)`)
       .eq('album_members.user_id', session.user.id)
@@ -57,7 +57,8 @@ function albumCard(a) {
   const cover = a.cover?.thumb_key || a.cover?.object_key;
   const role = a.album_members?.[0]?.role;
   const dates = formatDateRange(a.start_date, a.end_date);
-  return h('a', { class: 'album-card', href: url(`album/${a.id}`), 'data-link': true },
+  return h('div', { class: 'album-item' },
+    h('a', { class: 'album-card', href: url(`album/${a.id}`), 'data-link': true },
     cover
       ? h('img', { class: 'album-card__img', src: mediaUrl(cover), alt: '', loading: 'lazy' })
       : h('span', { class: 'album-card__letter' }, a.name.slice(0, 1).toUpperCase()),
@@ -65,7 +66,13 @@ function albumCard(a) {
     h('div', { class: 'album-card__overlay' },
       h('h2', { class: 'album-card__title' }, a.name),
       [dates, a.location].filter(Boolean).length > 0 &&
-        h('p', { class: 'album-card__meta' }, [dates, a.location].filter(Boolean).join(' · '))));
+        h('p', { class: 'album-card__meta' }, [dates, a.location].filter(Boolean).join(' · ')))),
+    h('a', {
+      class: 'album-card__preview',
+      href: url(`a/${a.slug}?convidado`),
+      'data-link': true,
+      'aria-label': `Ver «${a.name}» como convidado`,
+    }, icon('eye', 15), 'Ver como convidado'));
 }
 
 function landing(view) {
