@@ -1,5 +1,6 @@
 // POST { media_id } → confirma no R2 que os ficheiros existem e marca como 'ready'.
 // Se o álbum ainda não tiver capa, a primeira foto passa a ser a capa.
+// Música: só fica uma por álbum (a anterior é apagada).
 import { handler, HttpError, readJson, requireUuid } from '../_shared/http.ts';
 import { admin, requireUser } from '../_shared/supabase.ts';
 import { deleteObjects, headObject } from '../_shared/r2.ts';
@@ -45,6 +46,19 @@ Deno.serve(handler(async (req) => {
       .update({ cover_media_id: m.id })
       .eq('id', m.album_id)
       .is('cover_media_id', null);
+  }
+
+  if (m.kind === 'audio') {
+    const { data: old } = await admin
+      .from('media')
+      .select('id, object_key')
+      .eq('album_id', m.album_id)
+      .eq('kind', 'audio')
+      .neq('id', m.id);
+    if (old?.length) {
+      await deleteObjects(old.map((o) => o.object_key));
+      await admin.from('media').delete().in('id', old.map((o) => o.id));
+    }
   }
 
   return { media: updated };
