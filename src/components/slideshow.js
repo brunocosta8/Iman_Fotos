@@ -179,11 +179,10 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
   }
 
   function go(delta) {
-    show(index + delta, Math.sign(delta));
+    show(index + delta);
   }
 
-  /** dir: 1 = avançar (entra pela direita), -1 = recuar, 0 = sem animação */
-  function show(i, dir = 0) {
+  function show(i) {
     if (closed || !items.length) return;
     cancelAnimationFrame(rafId);
     index = (i + items.length) % items.length;
@@ -200,26 +199,17 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     bg.hidden = !bgKey;
     if (bgKey) bg.src = mediaUrl(bgKey);
 
-    // Passagem: a nova foto desliza para dentro e empurra a anterior para fora.
-    // Espera que a foto carregue (até 0,6 s; entretanto mostra a miniatura).
+    // Troca instantânea, como nos stories do Instagram. A foto anterior fica
+    // por baixo até a nova carregar (até 0,6 s; entretanto mostra a miniatura),
+    // para nunca aparecer um ecrã vazio.
     const prev = stage.lastElementChild;
     if (prev?.tagName === 'VIDEO') prev.pause();
-    const slide = Boolean(dir && prev);
     let revealed = false;
     let node;
     const reveal = () => {
       if (revealed || closed) return;
       revealed = true;
-      if (!prev) return;
-      if (slide) {
-        prev.classList.add(dir > 0 ? 'to-left' : 'to-right');
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          node.classList.remove('from-left', 'from-right');
-        }));
-        setTimeout(() => prev.remove(), 450);
-      } else {
-        prev.remove();
-      }
+      prev?.remove();
     };
 
     if (item.kind === 'photo') {
@@ -251,7 +241,6 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     }
     // Toques muito rápidos: nunca mais de duas camadas.
     while (stage.children.length > 1) stage.firstElementChild.remove();
-    if (slide) node.classList.add(dir > 0 ? 'from-right' : 'from-left');
     stage.append(node);
     preload(index + 1);
     preload(index - 1);
