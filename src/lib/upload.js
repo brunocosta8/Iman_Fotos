@@ -10,6 +10,14 @@ import { processImage } from './image.js';
 const PHOTO_EXT = /\.(jpe?g|png|webp|heic|heif|gif|avif)$/i;
 const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
 
+let processingChain = Promise.resolve();
+/** Executa as tarefas pela ordem de chegada, uma de cada vez. */
+function oneAtATime(task) {
+  const run = processingChain.then(task, task);
+  processingChain = run.catch(() => {});
+  return run;
+}
+
 export function detectKind(file) {
   if (file.type.startsWith('image/')) return 'photo';
   if (file.type.startsWith('video/')) return 'video';
@@ -28,14 +36,14 @@ export async function uploadFile(albumId, file, onStatus = () => {}) {
   const kind = detectKind(file);
   if (!kind) throw new AppError('unsupported_type');
 
-  onStatus({ phase: 'prepare' });
-  let p;
-  if (kind === 'photo') {
-    p = await processImage(file);
-  } else {
+  // Só uma foto/vídeo é reduzida de cada vez (é o que gasta memória no
+  // telemóvel); os envios podem acontecer vários ao mesmo tempo.
+  const p = await oneAtATime(async () => {
+    onStatus({ phase: 'prepare' });
+    if (kind === 'photo') return processImage(file);
     const { processVideo } = await import('./video.js'); // biblioteca pesada: só quando é preciso
-    p = await processVideo(file, (progress) => onStatus({ phase: 'convert', progress }));
-  }
+    return processVideo(file, (progress) => onStatus({ phase: 'convert', progress }));
+  });
 
   const res = await callFn('upload-url', {
     album_id: albumId,

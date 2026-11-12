@@ -7,12 +7,19 @@ import { PHOTO_MAX_SIDE, PHOTO_TARGET_BYTES, THUMB_MAX_SIDE } from './limits.js'
 const QUALITIES = [0.82, 0.74, 0.66, 0.58, 0.5];
 
 export async function processImage(file) {
-  const [takenAt, img] = await Promise.all([readTakenAt(file), loadImage(file)]);
+  const takenAt = await readTakenAt(file);
+  const img = await loadImage(file);
+  let main;
   try {
-    const w0 = img.naturalWidth;
-    const h0 = img.naturalHeight;
-    const main = await encode(img, w0, h0, PHOTO_MAX_SIDE, QUALITIES, PHOTO_TARGET_BYTES);
-    const thumb = await encode(img, w0, h0, THUMB_MAX_SIDE, [0.72], Infinity);
+    // A foto original (até 48 MP no iPhone) só é usada uma vez e libertada logo.
+    main = await encode(img, img.naturalWidth, img.naturalHeight, PHOTO_MAX_SIDE, QUALITIES, PHOTO_TARGET_BYTES, { keepCanvas: true });
+  } finally {
+    URL.revokeObjectURL(img.src);
+    img.removeAttribute('src');
+  }
+  try {
+    // Miniatura a partir da versão já reduzida (muito menos memória).
+    const thumb = await encode(main.canvas, main.width, main.height, THUMB_MAX_SIDE, [0.72], Infinity);
     return {
       blob: main.blob,
       mime: main.blob.type,
@@ -22,7 +29,7 @@ export async function processImage(file) {
       takenAt,
     };
   } finally {
-    URL.revokeObjectURL(img.src);
+    main.canvas.width = main.canvas.height = 0;
   }
 }
 
@@ -71,7 +78,7 @@ async function outputType() {
 }
 
 /** Desenha uma fonte (img, video…) num canvas reduzido e codifica. */
-export async function encode(source, w0, h0, maxSide, qualities, targetBytes) {
+export async function encode(source, w0, h0, maxSide, qualities, targetBytes, { keepCanvas = false } = {}) {
   const [w, h] = fitSize(w0, h0, maxSide);
   const canvas = document.createElement('canvas');
   canvas.width = w;
@@ -90,6 +97,7 @@ export async function encode(source, w0, h0, maxSide, qualities, targetBytes) {
     if (!blob) throw new AppError('image_decode');
     if (blob.size <= targetBytes) break;
   }
+  if (keepCanvas) return { blob, width: w, height: h, canvas };
   canvas.width = canvas.height = 0; // liberta memória (importante no iPhone)
   return { blob, width: w, height: h };
 }
