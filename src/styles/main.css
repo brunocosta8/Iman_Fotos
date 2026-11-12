@@ -859,6 +859,45 @@ code {
 
 .tile__badge .icon { filter: drop-shadow(0 1px 3px rgb(0 0 0 / 50%)); }
 
+/* ordenar fotos */
+.group__head-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sort-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.grid--sorting .tile {
+  cursor: grab;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  animation: tile-wiggle 0.5s ease-in-out infinite alternate;
+}
+
+.grid--sorting .tile:nth-child(2n) { animation-delay: -0.25s; }
+.grid--sorting .tile img { pointer-events: none; }
+
+@keyframes tile-wiggle {
+  from { transform: rotate(-0.6deg); }
+  to { transform: rotate(0.6deg); }
+}
+
+.tile--chosen { animation: none !important; transform: scale(1.06); box-shadow: 0 10px 24px rgb(0 0 0 / 25%); z-index: 2; }
+.tile--ghost { opacity: 0.35; }
+
+.sort-reset { margin-top: 14px; }
+
 /* ------------------------------------------------------------------ gerir álbum */
 
 .manage-hero {

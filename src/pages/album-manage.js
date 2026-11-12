@@ -23,11 +23,11 @@ export default async function manageAlbum(view, albumId) {
 
   const [albumRes, mediaRes, membersRes, invitesRes] = await Promise.all([
     supabase.from('albums')
-      .select('id, slug, name, location, start_date, end_date, cover_media_id')
+      .select('*')
       .eq('id', albumId)
       .maybeSingle(),
     supabase.from('media')
-      .select('id, kind, mime, object_key, thumb_key, width, height, duration_s, taken_at, created_at, uploaded_by')
+      .select('*')
       .eq('album_id', albumId)
       .eq('status', 'ready'),
     supabase.from('album_members')
@@ -51,7 +51,8 @@ export default async function manageAlbum(view, albumId) {
 
   // ---------------------------------------------------------------- estado
   const album = albumRes.data;
-  const media = sortMedia(mediaRes.data);
+  const media = sortMedia(mediaRes.data, albumRes.data.custom_order);
+  let reordering = false;
   let members = membersRes.data;
   let invites = invitesRes.data;
   const role = members.find((m) => m.user_id === uid)?.role;
@@ -237,23 +238,105 @@ export default async function manageAlbum(view, albumId) {
 
   // ================================================================ média
   function renderMedia() {
+    if (reordering) return renderReorder();
     const photos = media.filter((m) => m.kind === 'photo').length;
     const videos = media.length - photos;
-    const summary = [photos && plural(photos, 'foto', 'fotos'), videos && plural(videos, 'vídeo', 'vídeos')]
-      .filter(Boolean).join(' · ');
+    const summary = [
+      photos && plural(photos, 'foto', 'fotos'),
+      videos && plural(videos, 'vídeo', 'vídeos'),
+      media.length > 1 && (album.custom_order ? 'ordem personalizada' : 'ordenadas por data'),
+    ].filter(Boolean).join(' · ');
 
     mediaSlot.replaceChildren(
       h('div', { class: 'group__head' },
         h('h2', { class: 'group__title' }, 'Fotos e vídeos'),
-        media.length > 0 && h('button', {
-          class: 'link-btn',
-          type: 'button',
-          onclick: () => openViewer(0, true),
-        }, icon('play', 14), 'Slideshow')),
+        h('div', { class: 'group__head-btns' },
+          isOwner && media.length > 1 && h('button', {
+            class: 'link-btn',
+            type: 'button',
+            onclick: () => { reordering = true; renderMedia(); },
+          }, 'Ordenar'),
+          media.length > 0 && h('button', {
+            class: 'link-btn',
+            type: 'button',
+            onclick: () => openViewer(0, true),
+          }, icon('play', 14), 'Slideshow'))),
       media.length
         ? mediaGrid(media, (i) => openViewer(i, false))
         : h('div', { class: 'card' }, emptyState('Ainda não há fotos', 'Adiciona as primeiras fotos e vídeos da viagem.')),
       summary && h('p', { class: 'group__footer' }, summary));
+  }
+
+  /** Modo "Ordenar": arrastar as fotos para mudar a ordem do álbum e do slideshow. */
+  async function renderReorder() {
+    const grid = mediaGrid(media, () => {});
+    grid.classList.add('grid--sorting');
+    const save = h('button', { class: 'btn btn--primary btn--small', type: 'button' }, 'Guardar');
+    const cancel = h('button', { class: 'btn btn--ghost btn--small', type: 'button' }, 'Cancelar');
+    const reset = h('button', { class: 'row-btn', type: 'button' }, icon('calendar', 18), 'Repor ordem por data');
+
+    mediaSlot.replaceChildren(
+      h('div', { class: 'group__head' },
+        h('h2', { class: 'group__title' }, 'Ordenar fotos'),
+        h('div', { class: 'group__head-btns' }, cancel, save)),
+      h('p', { class: 'sort-hint' }, icon('image', 16), 'Mantém o dedo numa foto e arrasta-a para a nova posição.'),
+      grid,
+      h('div', { class: 'card list sort-reset' }, reset),
+      h('p', { class: 'group__footer' }, 'A ordem vale para o álbum e para o slideshow, também para os convidados. Fotos novas ficam no fim.'));
+
+    const { default: Sortable } = await import('sortablejs');
+    const sortable = Sortable.create(grid, {
+      animation: 180,
+      delay: 180,
+      delayOnTouchOnly: true,
+      ghostClass: 'tile--ghost',
+      chosenClass: 'tile--chosen',
+    });
+
+    const done = () => {
+      sortable.destroy();
+      reordering = false;
+      renderMedia();
+    };
+    const fail = (error) => {
+      const missing = error?.code === 'PGRST202' || /reorder_media|reset_media_order|custom_order/.test(error?.message || '');
+      toast(missing
+        ? 'Falta atualizar a base de dados para poder ordenar (ver instruções).'
+        : errorMessage(error), { type: 'error', ms: 6000 });
+    };
+
+    cancel.addEventListener('click', done);
+
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      const ids = [...grid.children].map((el) => el.dataset.id);
+      const { error } = await supabase.rpc('reorder_media', { p_album_id: album.id, p_ids: ids });
+      if (error) {
+        save.disabled = false;
+        fail(error);
+        return;
+      }
+      const pos = new Map(ids.map((id, i) => [id, i]));
+      media.forEach((m) => { m.sort_index = pos.get(m.id) ?? null; });
+      album.custom_order = true;
+      sortMedia(media, true);
+      toast('Ordem guardada', { type: 'success' });
+      done();
+    });
+
+    reset.addEventListener('click', async () => {
+      if (!confirm('Voltar a ordenar as fotos pela data em que foram tiradas?')) return;
+      const { error } = await supabase.rpc('reset_media_order', { p_album_id: album.id });
+      if (error) {
+        fail(error);
+        return;
+      }
+      media.forEach((m) => { m.sort_index = null; });
+      album.custom_order = false;
+      sortMedia(media, false);
+      toast('Fotos ordenadas por data', { type: 'success' });
+      done();
+    });
   }
 
   function openViewer(index, autoplay) {
@@ -356,7 +439,7 @@ export default async function manageAlbum(view, albumId) {
         });
         created.push(m);
         media.push(m);
-        sortMedia(media);
+        sortMedia(media, album.custom_order);
         if (m.kind === 'photo' && !album.cover_media_id) album.cover_media_id = m.id; // capa automática
         row.li.classList.add('is-done');
         set('Concluído', 1);

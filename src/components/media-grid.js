@@ -9,6 +9,7 @@ export function mediaGrid(items, onOpen) {
       return h('button', {
         class: 'tile',
         type: 'button',
+        'data-id': m.id,
         'aria-label': m.kind === 'video' ? `Vídeo ${i + 1}` : `Foto ${i + 1}`,
         onclick: () => onOpen(i),
       },

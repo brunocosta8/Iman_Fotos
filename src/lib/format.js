@@ -59,9 +59,17 @@ export function plural(n, one, many) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-/** Ordena como o servidor: data da foto (sem data no fim), depois data de envio. */
-export function sortMedia(list) {
+/**
+ * Ordena como o servidor: ordem personalizada (se existir; fotos novas no fim),
+ * depois data da foto (sem data no fim), depois data de envio.
+ */
+export function sortMedia(list, custom = false) {
   return list.sort((a, b) => {
+    if (custom) {
+      const ia = a.sort_index ?? Infinity;
+      const ib = b.sort_index ?? Infinity;
+      if (ia !== ib) return ia - ib;
+    }
     const ta = a.taken_at ? Date.parse(a.taken_at) : Infinity;
     const tb = b.taken_at ? Date.parse(b.taken_at) : Infinity;
     if (ta !== tb) return ta - tb;
