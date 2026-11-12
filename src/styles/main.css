@@ -1177,19 +1177,32 @@ code {
 .st__stage {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
 }
 
+/* foto/vídeo a ocupar o ecrã todo, como no Instagram */
 .st__media {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  max-width: none;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.7s ease;
   -webkit-user-drag: none;
-  animation: st-media 0.35s ease-out;
 }
 
-@keyframes st-media { from { opacity: 0; transform: scale(1.015); } }
+.st__media.is-in { opacity: 1; }
+
+/* zoom muito lento enquanto a foto está no ecrã */
+img.st__media.is-in { animation: st-zoom 7s ease-out forwards; }
+
+@keyframes st-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+.st.is-paused img.st__media { animation-play-state: paused; }
 
 .st__shade {
   position: absolute;

@@ -148,7 +148,7 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
 
   // ------------------------------------------------------------ lógica
   const current = () => items[index];
-  const currentVideo = () => (stage.firstChild?.tagName === 'VIDEO' ? stage.firstChild : null);
+  const currentVideo = () => (stage.lastElementChild?.tagName === 'VIDEO' ? stage.lastElementChild : null);
 
   function setFill(progress) {
     const p = Math.max(0, Math.min(1, progress));
@@ -199,11 +199,23 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     bg.hidden = !bgKey;
     if (bgKey) bg.src = mediaUrl(bgKey);
 
+    // Passagem suave: a nova foto aparece por cima da anterior quando já está
+    // carregada (esbatido), e só depois a anterior é removida.
+    const prev = stage.lastElementChild;
+    if (prev?.tagName === 'VIDEO') prev.pause();
+    let revealed = false;
     let node;
+    const reveal = () => {
+      if (revealed || closed) return;
+      revealed = true;
+      requestAnimationFrame(() => node.classList.add('is-in'));
+      if (prev) setTimeout(() => prev.remove(), 800);
+    };
+
     if (item.kind === 'photo') {
       node = h('img', { class: 'st__media', alt: '', decoding: 'async' });
       node.draggable = false;
-      const ready = () => { photoReady = true; };
+      const ready = () => { photoReady = true; reveal(); };
       node.addEventListener('load', ready, { once: true });
       node.addEventListener('error', ready, { once: true });
       node.src = mediaUrl(item.object_key);
@@ -219,11 +231,15 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
       node.muted = muted;
       node.addEventListener('ended', () => go(1));
       node.addEventListener('error', () => setTimeout(() => { if (current() === item) go(1); }, 1500));
+      node.addEventListener('loadeddata', reveal, { once: true });
+      setTimeout(reveal, 1200); // mostra pelo menos o poster se o vídeo demorar
       muteBtn.hidden = false;
       updateMuteBtn();
       if (!paused) playVideo(node);
     }
-    stage.replaceChildren(node);
+    // Toques muito rápidos: nunca mais de duas camadas.
+    while (stage.children.length > 1) stage.firstElementChild.remove();
+    stage.append(node);
     preload(index + 1);
     preload(index - 1);
     renderActions();
@@ -252,6 +268,7 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
 
   function setPaused(value, manual = false) {
     paused = value;
+    el.classList.toggle('is-paused', value);
     el.classList.toggle('is-paused-manual', value && manual);
     lastTs = 0;
     const v = currentVideo();
