@@ -56,10 +56,10 @@ export default async function publicAlbum(view, slug) {
         items.length > 0 && h('button', {
           class: 'btn btn--primary',
           type: 'button',
-          onclick: () => openSlideshow(items, 0, { autoplay: true }),
+          onclick: () => openSlideshow(items, 0, { autoplay: true, title: album.name }),
         }, icon('play', 16), 'Slideshow')),
       items.length
-        ? mediaGrid(items, (i) => openSlideshow(items, i))
+        ? mediaGrid(items, (i) => openSlideshow(items, i, { title: album.name }))
         : h('p', { class: 'empty muted' }, 'Ainda não há fotos neste álbum.'),
       manageSlot));
 

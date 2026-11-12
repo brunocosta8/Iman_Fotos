@@ -15,4 +15,4 @@ export const VIDEO_BITRATE = 2_000_000; // ~7,5 MB para 30 s
 
 export const VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
-export const SLIDESHOW_PHOTO_MS = 4500;
+export const SLIDESHOW_PHOTO_MS = 5000;

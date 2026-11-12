@@ -260,6 +260,7 @@ export default async function manageAlbum(view, albumId) {
     // O visualizador recebe uma cópia; as ações atualizam a lista real.
     openSlideshow([...media], index, {
       autoplay,
+      title: album.name,
       actions: (item, api) => [
         isOwner && item.kind === 'photo' && item.id !== album.cover_media_id && {
           label: 'Usar como capa',
