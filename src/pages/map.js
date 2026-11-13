@@ -30,20 +30,20 @@ export default async function mapPage(view) {
   const map = L.map(mapEl, { zoomControl: false, attributionControl: true, worldCopyJump: true });
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   map.attributionControl.setPrefix('');
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd',
-    maxZoom: 19,
-    referrerPolicy: 'strict-origin-when-cross-origin',
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
-  }).addTo(map);
+  addTiles(map);
   map.setView([39.5, -8], 5); // Portugal, enquanto os pins carregam
+  main.querySelector('.map-loading')?.remove();
+  setTimeout(() => map.invalidateSize(), 50);
 
   // Coordenadas: as guardadas no álbum ou, para álbuns antigos/texto livre,
   // procuradas pelo nome do local (e guardadas, se fores o criador).
   const placed = await Promise.all(albums.map(async (a) => {
     if (a.latitude != null && a.longitude != null) return { a, lat: a.latitude, lon: a.longitude };
     if (!a.location) return null;
-    const hit = await geocodePlace(a.location).catch(() => null);
+    const hit = await Promise.race([
+      geocodePlace(a.location).catch(() => null),
+      new Promise((res) => setTimeout(() => res(null), 6000)), // não ficar à espera para sempre
+    ]);
     if (!hit) return null;
     if (a.album_members?.[0]?.role === 'owner') {
       supabase.from('albums').update({ latitude: hit.latitude, longitude: hit.longitude }).eq('id', a.id).then(() => {});
@@ -51,7 +51,6 @@ export default async function mapPage(view) {
     return { a, lat: hit.latitude, lon: hit.longitude };
   }));
   const points = placed.filter(Boolean);
-  main.querySelector('.map-loading')?.remove();
 
   // Álbuns no mesmo sítio: afastar ligeiramente para se verem todos
   const seen = new Map();
@@ -91,9 +90,44 @@ export default async function mapPage(view) {
 
   if (points.length === 1) map.setView([points[0].lat, points[0].lon], 7);
   else if (points.length > 1) map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lon])), { padding: [48, 48], maxZoom: 9 });
-  setTimeout(() => map.invalidateSize(), 50);
+  map.invalidateSize();
 
   return () => map.remove();
+}
+
+/**
+ * Mapa base da CARTO (mais bonito). Se não carregar no telemóvel, muda
+ * sozinho para o mapa normal do OpenStreetMap.
+ */
+function addTiles(map) {
+  const osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd',
+    maxZoom: 19,
+    crossOrigin: false,
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    attribution: `${osmAttribution} · © <a href="https://carto.com/attributions">CARTO</a>`,
+  });
+  let loaded = 0;
+  let failed = 0;
+  let switched = false;
+  const useOsm = () => {
+    if (switched) return;
+    switched = true;
+    map.removeLayer(carto);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      attribution: osmAttribution,
+    }).addTo(map);
+  };
+  carto.on('tileload', () => { loaded += 1; });
+  carto.on('tileerror', () => {
+    failed += 1;
+    if (!loaded && failed >= 3) useOsm();
+  });
+  carto.addTo(map);
+  setTimeout(() => { if (!loaded) useOsm(); }, 6000);
 }
 
 function popup(a) {
