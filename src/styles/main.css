@@ -926,6 +926,9 @@ code {
 
 .pin-icon { background: none; border: 0; }
 
+/* tom quente no mapa, a condizer com o bege da app */
+.map-tiles { filter: saturate(0.7) sepia(0.15) brightness(1.03); }
+
 .pin {
   display: grid;
   place-items: center;

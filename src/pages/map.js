@@ -96,38 +96,16 @@ export default async function mapPage(view) {
 }
 
 /**
- * Mapa base da CARTO (mais bonito). Se não carregar no telemóvel, muda
- * sozinho para o mapa normal do OpenStreetMap.
+ * Mapa base do OpenStreetMap: gratuito e sem chave.
+ * (A CARTO passou a exigir chave e devolvia imagens "API key required".)
  */
 function addTiles(map) {
-  const osmAttribution = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-  const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd',
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    crossOrigin: false,
-    referrerPolicy: 'strict-origin-when-cross-origin',
-    attribution: `${osmAttribution} · © <a href="https://carto.com/attributions">CARTO</a>`,
-  });
-  let loaded = 0;
-  let failed = 0;
-  let switched = false;
-  const useOsm = () => {
-    if (switched) return;
-    switched = true;
-    map.removeLayer(carto);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      referrerPolicy: 'strict-origin-when-cross-origin',
-      attribution: osmAttribution,
-    }).addTo(map);
-  };
-  carto.on('tileload', () => { loaded += 1; });
-  carto.on('tileerror', () => {
-    failed += 1;
-    if (!loaded && failed >= 3) useOsm();
-  });
-  carto.addTo(map);
-  setTimeout(() => { if (!loaded) useOsm(); }, 6000);
+    referrerPolicy: 'strict-origin-when-cross-origin', // o OSM exige saber de que site vem o pedido
+    className: 'map-tiles',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
 }
 
 function popup(a) {
