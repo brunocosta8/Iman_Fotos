@@ -217,7 +217,12 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
       node.draggable = false;
       if (item.thumb_key) node.style.backgroundImage = `url("${mediaUrl(item.thumb_key)}")`;
       setTimeout(reveal, 600);
-      const ready = () => { photoReady = true; reveal(); };
+      setFit(node, item.width, item.height);
+      const ready = () => {
+        setFit(node, node.naturalWidth, node.naturalHeight);
+        photoReady = true;
+        reveal();
+      };
       node.addEventListener('load', ready, { once: true });
       node.addEventListener('error', ready, { once: true });
       node.src = mediaUrl(item.object_key);
@@ -231,6 +236,8 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
         preload: 'auto',
       });
       node.muted = muted;
+      setFit(node, item.width, item.height);
+      node.addEventListener('loadedmetadata', () => setFit(node, node.videoWidth, node.videoHeight), { once: true });
       node.addEventListener('ended', () => go(1));
       node.addEventListener('error', () => setTimeout(() => { if (current() === item) go(1); }, 1500));
       node.addEventListener('loadeddata', reveal, { once: true });
@@ -247,6 +254,25 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     renderActions();
     rafId = requestAnimationFrame(tick);
   }
+
+  /**
+   * Foto com a mesma orientação do ecrã → ecrã inteiro (como no Instagram).
+   * Orientação diferente (ex.: foto horizontal com o telemóvel ao alto) →
+   * mostra a foto inteira, com a versão desfocada a preencher o resto.
+   */
+  function setFit(node, w, h) {
+    if (!w || !h) return;
+    const landscapePhoto = w > h * 1.05;
+    const landscapeScreen = innerWidth > innerHeight;
+    node.classList.toggle('is-contain', landscapePhoto !== landscapeScreen && Math.abs(w - h) > Math.min(w, h) * 0.05);
+  }
+
+  const onResize = () => {
+    for (const n of stage.children) {
+      setFit(n, n.naturalWidth || n.videoWidth, n.naturalHeight || n.videoHeight);
+    }
+  };
+  addEventListener('resize', onResize);
 
   function playVideo(v) {
     v.play().catch(() => {
@@ -333,6 +359,7 @@ export function openSlideshow(items, start = 0, { autoplay = false, title = '', 
     wakeLock?.release().catch(() => {});
     removeEventListener('popstate', onPop);
     removeEventListener('keydown', onKey);
+    removeEventListener('resize', onResize);
     document.removeEventListener('visibilitychange', onVisibility);
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     el.remove();

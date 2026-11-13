@@ -1357,6 +1357,13 @@ code {
   -webkit-user-drag: none;
 }
 
+/* foto/vídeo com orientação diferente do ecrã: mostrar inteira */
+.st__media.is-contain {
+  object-fit: contain;
+  background-image: none !important;
+  filter: drop-shadow(0 10px 30px rgb(0 0 0 / 35%));
+}
+
 .st__shade {
   position: absolute;
   inset: 0;
